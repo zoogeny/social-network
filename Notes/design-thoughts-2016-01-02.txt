@@ -1,0 +1,156 @@
+NOTE: The general idea of this system was lifted from a GDC talk on Context
+Aware Dialogue systems in The Last of Us.  I have some notes on that talk
+including the presenter's name which I will endeavour to add to these notes
+when possible.  The system they were using was to drive the audio system in
+their game but it struck me that this could be a general purpose system and it
+could reasonably drive a story-based narrative. This system is a first pass
+attempt at exploring this idea.
+
+Story -> 1 or more Conversations
+         1 or more Actors
+
+Conversation -> 1 or more Dialogues
+                1 or more Actors
+
+Dialog -> Graph of expressions
+          (Directed? Tree?)
+          Flow of idea exchanges
+          Contributes to "facts" and "experience"
+
+Actors -> Have Traits (e.g inclinations)
+            - Emotions
+            - Preferences
+            - Superstitions
+          Goals (e.g. attempt to persuade)
+          Abilities (e.g. insightful, intuitive, )
+            - Detect lies
+            - Physiognomy
+                - Detect culture
+                - Detect traits
+                - Detect abilities
+            - Empathy
+                - Detect emotion
+                - Affects emotion
+            - Manipulation
+                - Avoids lie detection
+                - Causes words to slip
+          Knowledge
+            - Facts
+            - Experiences
+          Expressions
+            - Words
+            - Body language
+            - Facial expressions
+            - Visible emotion display (e.g. crying)
+            - Tone of voice
+
+Universe -> The state of all Actor Knowledge
+            Also includes world state not known to any actor
+            Updates over time
+                - information travels through a social network
+                  at a fixed interval
+
+I'd like to avoid having to hand-code a dialogue tree. This is especially true
+given a large possible narrative space. A binary tree is exponential and leads
+to repetitive and boring interaction. I'd rather have a large number of things
+to talk about based on an actors knowledge, goals and traits.
+
+I'm not sure how to represent the data for dialogues. Since a dialog may be
+triggered only if the Actor has a particular disposition towards the other
+Actor in the conversation. It may also only be triggered if certain facts are
+known to the Actor (e.g. through direct experience or through social
+connections).
+
+What is really the case is that given a particular fixed universe there is a
+finite and fixed number of possible dialogues. At any time all possible dialog
+for a particular Actor is filtered based on what can and cannot be said. The
+remaining dialog could be scored for relevance ... somehow ...
+
+In the most basic form, two actors (one human, one computer) should be able to
+engage in a conversation from the command line. The only thing that
+differentiates a human and a computer would be that a computer's options are
+scored and the next branch is selected (maybe based on personality? abilities?)
+while a human is presented with a list of options (e.g. top 3 to 5 possible
+dialogues)
+
+It will be a challenge to represent so much text - potentially 10k+ lines of
+dialogue - in a clear way. I recall the talk with Naughty Dog where they stored
+the dialogue inside Lisp files. Ultimately I'd consider building an editor and
+a way to visualize the narrative graph. For a first pass, I would consider JSON
+simply for its ubiquity and ease to work with.
+
+Another challenge is to represent what an Actor "knows", especially in the
+context of filtering dialogue based on that knowledge. One thought that comes
+to mind is to have a list of "all that is knowable" and limit it to particular
+types (e.g. boolean, string, number/int, etc.)
+
+I imagine a tick, where events that happen in the world are experienced first
+hand by some actors. On subsequent ticks, these facts are transmitted through
+social networks to other actors. In this way, knowledge of events in the world
+propagates.
+
+In the simple case, a tick could be run on each response from a human actor. In
+some cases time advancing may make no difference to the outcome of a
+conversation, e.g.  a two person Story with no world events. The tick could,
+for example look like:
+
+    Story Tick
+        - World
+            - events trigger based on time
+        - Universe
+            - updates with a new World state
+        - Actors
+            - direct experience is updated
+            - process the previous dialogue
+            - update their knowledge and emotions
+            - re-evaluate their goals
+            - change expression
+            - filter available dialogue
+            - rank available dialogue
+        - Universe
+            - update with new Actor state
+        - Actors
+            - take turns exchanging dialogue
+
+The Story feels like the top-most element in that the story could contain the
+Universe, the World (maybe the world could be thought of as a type of Actor?),
+the Actors, and Time.
+
+I'm not certain what types (e.g. class vs struct) I should make for each of
+Story, Actor, etc. so for now I'll make them all classes and give it more
+thought.
+
+I also need to consider how to model the social network between the actors. The
+actors will be having conversations (e.g. even those actors not conversing
+directly with a human) in order to transfer information through the Universe.
+
+The knowledge in the Universe would be hierarchical. That is, there is all
+information and then there is information known to groups and information known
+to individuals.  It may be best to include Actors in groups so that cultural
+information is easy to set up and users that have a single information source
+(e.g. a news broadcast network) can more easily and efficiently represent their
+knowledge state. In a more complex sense not all information from a broadcast
+source (e.g. a radio program, a news paper) would be known to all members (e.g.
+only skimmed headlines, missed a few pieces of detail).
+
+I'd also like to consider unreliability in knowledge. An Actor with low
+intelligence may misinterpret information they gather. Actors with particular
+traits (e.g.  superstitions, prejudices) may color information with false
+understanding.
+
+The idea of Actors having Goals is interesting to me as well. In a conversation
+with multiple dialogues, the Actor may wish to focus on a particular dialogue
+or they may wish to gain particular information. They may be motivated to
+persuade or deceive a human actor. They may wish to withhold some information.
+They may have information on what the human actor knows and attempt to coerce
+that information from them. They may have the ability to "read your expression"
+to accurately tell if you are lying.
+
+Many of these features would work especially well with other game mechanics. A
+world outside of the dialogue. Actor progression (e.g. gaining abilities,
+maturity).
+
+Ideally the goal is to have Actors learn about the human player through their
+conversations and their knowledge of the human's conversations with others in
+order to provide a deep conversation mechanic leading to an immersive story.
+
